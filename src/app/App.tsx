@@ -131,6 +131,45 @@ function PageSkeletonShell({ children }: { children: React.ReactNode }) {
   );
 }
 
+// ── Confirm dialog ────────────────────────────────────────────────────────────
+function ConfirmDialog({ open, title, message, confirmLabel = "O'chirish", onConfirm, onCancel }: {
+  open: boolean; title: string; message: string; confirmLabel?: string; onConfirm: () => void; onCancel: () => void;
+}) {
+  if (!open) return null;
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={onCancel}>
+      <div
+        className="bg-card border border-border rounded-2xl p-6 max-w-sm w-full shadow-xl"
+        onClick={e => e.stopPropagation()}
+      >
+        <div className="flex items-start gap-3">
+          <div className="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-red-100 text-red-600">
+            <AlertTriangle size={20} />
+          </div>
+          <div className="flex-1">
+            <h2 className="text-base font-bold text-foreground">{title}</h2>
+            <p className="text-sm text-muted-foreground mt-1">{message}</p>
+          </div>
+        </div>
+        <div className="flex items-center justify-end gap-2 mt-6">
+          <button
+            onClick={onCancel}
+            className="px-4 py-2 bg-muted hover:bg-muted/70 text-muted-foreground rounded-lg text-sm font-semibold transition-colors"
+          >
+            Bekor qilish
+          </button>
+          <button
+            onClick={onConfirm}
+            className="px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-sm font-semibold transition-colors"
+          >
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 function scoreColor(score: number | null | undefined): string {
   if (score == null) return "#94A3B8";
@@ -159,11 +198,11 @@ function partLabel(mode?: string | null): string {
 }
 
 function timeAgo(iso?: string | null): string {
-  if (!iso) return "Never";
+  if (!iso) return "Hech qachon";
   const then = new Date(iso).getTime();
   const diff = Date.now() - then;
   const day = 86400000;
-  if (diff < 3600000) return "Just now";
+  if (diff < 3600000) return "Hozirgina";
   if (diff < day) return `${Math.floor(diff / 3600000)}h ago`;
   if (diff < 7 * day) return `${Math.floor(diff / day)}d ago`;
   return new Date(iso).toLocaleDateString();
@@ -182,10 +221,10 @@ function Sidebar({ page, setPage, onLogout }: {
   page: Page; setPage: (p: Page) => void; onLogout: () => void;
 }) {
   const nav = [
-    { id: "students" as Page, icon: <Users size={16} />, label: "Students" },
-    { id: "feedback-review" as Page, icon: <MessageSquare size={16} />, label: "Feedback Review" },
-    { id: "analytics" as Page, icon: <BarChart3 size={16} />, label: "Analytics" },
-    { id: "questions" as Page, icon: <Zap size={16} />, label: "Questions" },
+    { id: "students" as Page, icon: <Users size={16} />, label: "O'quvchilar" },
+    { id: "feedback-review" as Page, icon: <MessageSquare size={16} />, label: "Tahlillar ko'rigi" },
+    { id: "analytics" as Page, icon: <BarChart3 size={16} />, label: "Analitika" },
+    { id: "questions" as Page, icon: <Zap size={16} />, label: "Savollar" },
   ];
   const active = page === "student-detail" ? "students" : page;
 
@@ -198,13 +237,13 @@ function Sidebar({ page, setPage, onLogout }: {
           </div>
           <div>
             <div className="text-[14px] font-bold tracking-tight text-foreground leading-none">SpeakFlow</div>
-            <div className="text-[10px] text-muted-foreground mt-0.5 tracking-wide uppercase">Admin Console</div>
+            <div className="text-[10px] text-muted-foreground mt-0.5 tracking-wide uppercase">Admin panel</div>
           </div>
         </div>
       </div>
 
       <nav className="flex-1 px-3 py-3 space-y-0.5 overflow-y-auto">
-        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 py-2">Navigation</div>
+        <div className="text-[10px] font-semibold text-muted-foreground uppercase tracking-widest px-3 py-2">Bo'limlar</div>
         {nav.map(({ id, icon, label }) => {
           const isActive = active === id;
           return (
@@ -228,7 +267,7 @@ function Sidebar({ page, setPage, onLogout }: {
             onClick={onLogout}
             className="w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-all"
           >
-            Logout
+            Chiqish
           </button>
         </div>
       </nav>
@@ -251,7 +290,7 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
       api.setToken(data.access_token);
       onLogin();
     } catch (err) {
-      setError("Invalid email or password");
+      setError("Email yoki parol noto'g'ri");
     } finally {
       setLoading(false);
     }
@@ -265,7 +304,7 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
             <Mic size={26} className="text-white" />
           </div>
           <h1 className="text-2xl font-bold text-foreground tracking-tight">SpeakFlow</h1>
-          <p className="text-sm text-muted-foreground mt-1 font-medium">Admin Login</p>
+          <p className="text-sm text-muted-foreground mt-1 font-medium">Admin kirish</p>
         </div>
 
         <form onSubmit={handleSubmit} className="bg-card border border-border rounded-2xl p-6 shadow-sm">
@@ -281,12 +320,12 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
               />
             </div>
             <div>
-              <label className="block text-sm font-semibold text-foreground mb-1.5">Password</label>
+              <label className="block text-sm font-semibold text-foreground mb-1.5">Parol</label>
               <input
                 type="password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                placeholder="Enter your password"
+                placeholder="Parolingizni kiriting"
                 className="w-full px-3.5 py-2.5 bg-muted border border-border rounded-xl text-sm text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all"
               />
             </div>
@@ -296,7 +335,7 @@ function LoginPage({ onLogin }: { onLogin: () => void }) {
               disabled={loading}
               className="w-full py-2.5 bg-blue-600 hover:bg-blue-700 active:bg-blue-800 disabled:opacity-70 text-white font-semibold rounded-xl transition-all text-sm shadow-sm shadow-blue-500/20 mt-1"
             >
-              {loading ? "Signing in..." : "Login"}
+              {loading ? "Kirilmoqda..." : "Kirish"}
             </button>
           </div>
         </form>
@@ -362,15 +401,15 @@ function StudentsPage({ onSelect }: { onSelect: (s: TelegramUser) => void }) {
       <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">
         <div className="flex items-center justify-between mb-7">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Students</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">{users.length} enrolled</p>
+            <h1 className="text-xl font-bold text-foreground">O'quvchilar</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{users.length} ro'yxatdan o'tgan</p>
           </div>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search students..."
+              placeholder="O'quvchilarni qidirish..."
               className="pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 text-foreground placeholder:text-muted-foreground w-56"
             />
           </div>
@@ -378,23 +417,23 @@ function StudentsPage({ onSelect }: { onSelect: (s: TelegramUser) => void }) {
 
         {stats && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-7">
-            <StatCard icon={<Users size={16} />} label="Total Students" value={stats.total_users} iconColor="#2563EB" />
-            <StatCard icon={<Activity size={16} />} label="Total Sessions" value={stats.total_sessions} iconColor="#0D9488" />
-            <StatCard icon={<Target size={16} />} label="Total Analyses" value={stats.total_analyses} iconColor="#7C3AED" />
-            <StatCard icon={<Mic size={16} />} label="Total Questions" value={stats.total_questions} iconColor="#D97706" />
+            <StatCard icon={<Users size={16} />} label="Jami o'quvchilar" value={stats.total_users} iconColor="#2563EB" />
+            <StatCard icon={<Activity size={16} />} label="Jami mashg'ulotlar" value={stats.total_sessions} iconColor="#0D9488" />
+            <StatCard icon={<Target size={16} />} label="Jami tahlillar" value={stats.total_analyses} iconColor="#7C3AED" />
+            <StatCard icon={<Mic size={16} />} label="Jami savollar" value={stats.total_questions} iconColor="#D97706" />
           </div>
         )}
 
         <div className="bg-card border border-border rounded-xl overflow-hidden">
           <div className="flex items-center justify-between px-5 py-3.5 border-b border-border">
-            <span className="text-sm font-semibold text-foreground">All Students</span>
-            <span className="text-xs text-muted-foreground">{filtered.length} results</span>
+            <span className="text-sm font-semibold text-foreground">Barcha o'quvchilar</span>
+            <span className="text-xs text-muted-foreground">{filtered.length} natija</span>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  {["Student", "Level", "Target", "Sessions", "Avg", "Best", "Last Active", ""].map(h => (
+                  {["O'quvchi", "Daraja", "Maqsad", "Mashg'ulotlar", "O'rtacha", "Eng yaxshi", "Oxirgi faollik", ""].map(h => (
                     <th key={h} className="text-left px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest first:pl-5">{h}</th>
                   ))}
                 </tr>
@@ -403,7 +442,7 @@ function StudentsPage({ onSelect }: { onSelect: (s: TelegramUser) => void }) {
                 {filtered.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-5 py-10 text-center text-sm text-muted-foreground">
-                      No students yet. They appear here after registering in the bot.
+                      Hozircha o'quvchi yo'q. Ular botda ro'yxatdan o'tgach shu yerda paydo bo'ladi.
                     </td>
                   </tr>
                 )}
@@ -490,7 +529,7 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
       <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">
         <div className="flex items-center gap-2 mb-6">
           <button onClick={onBack} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
-            <ArrowLeft size={14} /> Students
+            <ArrowLeft size={14} /> O'quvchilar
           </button>
         </div>
 
@@ -503,12 +542,12 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
               <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-1 text-xs text-muted-foreground">
                 {u.username && <span className="flex items-center gap-1"><AtSign size={12} />{u.username}</span>}
                 {u.phone_number && <span className="flex items-center gap-1"><Phone size={12} />{u.phone_number}</span>}
-                <span className="flex items-center gap-1"><Calendar size={12} />Joined {new Date(u.created_at).toLocaleDateString()}</span>
+                <span className="flex items-center gap-1"><Calendar size={12} />Qo'shilgan {new Date(u.created_at).toLocaleDateString()}</span>
               </div>
             </div>
             <div className="flex gap-2 flex-wrap">
               <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-muted text-foreground capitalize">{u.english_level}</span>
-              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700">Target {u.target_band}</span>
+              <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-blue-100 text-blue-700">Maqsad {u.target_band}</span>
               <span className="text-xs font-semibold px-2.5 py-1 rounded-lg bg-muted text-foreground">{u.native_language}</span>
             </div>
           </div>
@@ -529,20 +568,20 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
             <TableSkeleton rows={4} cols={3} />
           </>
         ) : error ? (
-          <p className="text-sm text-red-500 py-10 text-center">Failed to load student data.</p>
+          <p className="text-sm text-red-500 py-10 text-center">Ma'lumotni yuklab bo'lmadi.</p>
         ) : (
           <>
             {/* Stat cards */}
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
-              <MiniStat icon={<Activity size={14} />} label="Sessions" value={stats?.total_sessions ?? 0} color="#2563EB" />
-              <MiniStat icon={<Target size={14} />} label="Avg Score" value={stats?.average_score ?? "—"} color="#0D9488" />
-              <MiniStat icon={<Award size={14} />} label="Best" value={stats?.best_score ?? "—"} color="#7C3AED" />
-              <MiniStat icon={<Flame size={14} />} label="Streak" value={`${stats?.streak ?? 0}d`} color="#D97706" />
+              <MiniStat icon={<Activity size={14} />} label="Mashg'ulotlar" value={stats?.total_sessions ?? 0} color="#2563EB" />
+              <MiniStat icon={<Target size={14} />} label="O'rtacha ball" value={stats?.average_score ?? "—"} color="#0D9488" />
+              <MiniStat icon={<Award size={14} />} label="Eng yaxshi" value={stats?.best_score ?? "—"} color="#7C3AED" />
+              <MiniStat icon={<Flame size={14} />} label="Ketma-ketlik" value={`${stats?.streak ?? 0}d`} color="#D97706" />
             </div>
 
             {/* Score progress */}
             <div className="bg-card border border-border rounded-xl p-5 mb-5">
-              <h2 className="text-sm font-bold text-foreground mb-4">Score Progress</h2>
+              <h2 className="text-sm font-bold text-foreground mb-4">Ball dinamikasi</h2>
               {chartData.length > 0 ? (
                 <ResponsiveContainer width="100%" height={200}>
                   <LineChart data={chartData} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
@@ -554,27 +593,27 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
                   </LineChart>
                 </ResponsiveContainer>
               ) : (
-                <p className="text-sm text-muted-foreground py-8 text-center">No scored sessions yet.</p>
+                <p className="text-sm text-muted-foreground py-8 text-center">Hozircha baholangan mashg'ulot yo'q.</p>
               )}
             </div>
 
             {/* Sessions table */}
             <div className="bg-card border border-border rounded-xl overflow-hidden mb-5">
               <div className="px-5 py-3.5 border-b border-border">
-                <h2 className="text-sm font-bold text-foreground">Practice History</h2>
+                <h2 className="text-sm font-bold text-foreground">Mashq tarixi</h2>
               </div>
               <div className="overflow-x-auto">
                 <table className="w-full">
                   <thead>
                     <tr className="border-b border-border bg-muted/20">
-                      {["Part", "Question", "Score", "Date"].map(h => (
+                      {["Qism", "Savol", "Ball", "Sana"].map(h => (
                         <th key={h} className="text-left px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest first:pl-5">{h}</th>
                       ))}
                     </tr>
                   </thead>
                   <tbody>
                     {(detail?.sessions ?? []).length === 0 && (
-                      <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-muted-foreground">No sessions yet.</td></tr>
+                      <tr><td colSpan={4} className="px-5 py-8 text-center text-sm text-muted-foreground">Hozircha mashg'ulot yo'q.</td></tr>
                     )}
                     {(detail?.sessions ?? []).map(s => (
                       <tr key={s.id} className="border-b border-border last:border-0">
@@ -593,7 +632,7 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
             {analysis && (
               <div className="bg-card border border-border rounded-xl p-5">
                 <div className="flex items-center justify-between mb-4">
-                  <h2 className="text-sm font-bold text-foreground">Latest Feedback</h2>
+                  <h2 className="text-sm font-bold text-foreground">Oxirgi tahlil</h2>
                   <ScoreBadge score={analysis.overall_score} />
                 </div>
                 {analysis.summary && <p className="text-sm text-muted-foreground mb-4">{analysis.summary}</p>}
@@ -609,7 +648,7 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
                 )}
                 {Array.isArray(analysis.mistakes) && analysis.mistakes.length > 0 && (
                   <div className="mb-3">
-                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Mistakes</h3>
+                    <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Xatolar</h3>
                     <div className="space-y-1.5">
                       {analysis.mistakes.slice(0, 5).map((m: any, i: number) => (
                         <div key={i} className="text-xs flex flex-wrap items-center gap-1.5">
@@ -640,7 +679,7 @@ function FeedbackModal({ result, onClose }: { result: AnalysisResult; onClose: (
       >
         <div className="sticky top-0 bg-card border-b border-border px-5 py-4 flex items-center justify-between">
           <div>
-            <h2 className="text-base font-bold text-foreground">{result.student_name || "Unknown student"}</h2>
+            <h2 className="text-base font-bold text-foreground">{result.student_name || "Noma'lum o'quvchi"}</h2>
             <p className="text-xs text-muted-foreground">{partLabel(result.practice_mode)} · {new Date(result.created_at).toLocaleString()}</p>
           </div>
           <div className="flex items-center gap-3">
@@ -651,17 +690,17 @@ function FeedbackModal({ result, onClose }: { result: AnalysisResult; onClose: (
         <div className="p-5 space-y-4">
           {result.question && (
             <div>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Question</h3>
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Savol</h3>
               <p className="text-sm text-foreground">{result.question}</p>
             </div>
           )}
           <div>
-            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Transcript</h3>
+            <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Matn</h3>
             <p className="text-sm text-muted-foreground italic">"{result.transcript}"</p>
           </div>
           {a.summary && (
             <div>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Summary</h3>
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Xulosa</h3>
               <p className="text-sm text-foreground">{a.summary}</p>
             </div>
           )}
@@ -677,7 +716,7 @@ function FeedbackModal({ result, onClose }: { result: AnalysisResult; onClose: (
           )}
           {Array.isArray(a.mistakes) && a.mistakes.length > 0 && (
             <div>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Mistakes</h3>
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-2">Xatolar</h3>
               <div className="space-y-1.5">
                 {a.mistakes.map((m: any, i: number) => (
                   <div key={i} className="text-xs flex flex-wrap items-center gap-1.5">
@@ -692,7 +731,7 @@ function FeedbackModal({ result, onClose }: { result: AnalysisResult; onClose: (
           )}
           {a.improved_answer && (
             <div>
-              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Improved Answer</h3>
+              <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-wide mb-1">Yaxshilangan javob</h3>
               <p className="text-sm text-foreground">{a.improved_answer}</p>
             </div>
           )}
@@ -734,15 +773,15 @@ function FeedbackReviewPage() {
       <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Feedback Review</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">{results.length} analyses</p>
+            <h1 className="text-xl font-bold text-foreground">Tahlillar ko'rigi</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{results.length} tahlil</p>
           </div>
           <div className="relative">
             <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               value={search}
               onChange={e => setSearch(e.target.value)}
-              placeholder="Search student or transcript..."
+              placeholder="O'quvchi yoki matnni qidirish..."
               className="pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 text-foreground placeholder:text-muted-foreground w-64"
             />
           </div>
@@ -752,24 +791,24 @@ function FeedbackReviewPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  {["Student", "Part", "Transcript", "Score", "Date", ""].map(h => (
+                  {["O'quvchi", "Qism", "Matn", "Ball", "Sana", ""].map(h => (
                     <th key={h} className="text-left px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest first:pl-5">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={6} className="px-5 py-10 text-center text-sm text-muted-foreground">No feedback yet.</td></tr>
+                  <tr><td colSpan={6} className="px-5 py-10 text-center text-sm text-muted-foreground">Hozircha tahlil yo'q.</td></tr>
                 )}
                 {filtered.map(result => (
                   <tr key={result.id} className="border-b border-border last:border-0 hover:bg-muted/30 cursor-pointer" onClick={() => setSelected(result)}>
-                    <td className="px-5 py-3.5 text-sm font-medium text-foreground">{result.student_name || "Unknown"}</td>
+                    <td className="px-5 py-3.5 text-sm font-medium text-foreground">{result.student_name || "Noma'lum"}</td>
                     <td className="px-4 py-3.5"><span className="text-xs font-semibold px-2 py-0.5 bg-muted rounded">{partLabel(result.practice_mode)}</span></td>
                     <td className="px-4 py-3.5 text-xs text-muted-foreground truncate max-w-[260px]">{result.transcript}</td>
                     <td className="px-4 py-3.5"><ScoreBadge score={result.score ?? result.analysis_data?.overall_score} /></td>
                     <td className="px-4 py-3.5 text-xs text-muted-foreground">{new Date(result.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3.5">
-                      <button className="text-xs text-[#2563EB] font-semibold hover:underline">View</button>
+                      <button className="text-xs text-[#2563EB] font-semibold hover:underline">Ko'rish</button>
                     </td>
                   </tr>
                 ))}
@@ -819,20 +858,20 @@ function AnalyticsPage() {
   return (
     <div className="flex-1 overflow-auto">
       <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">
-        <h1 className="text-xl font-bold text-foreground mb-6">Analytics</h1>
+        <h1 className="text-xl font-bold text-foreground mb-6">Analitika</h1>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
-          <StatCard icon={<Users size={16} />} label="Students" value={k?.total_users ?? 0} iconColor="#2563EB" />
-          <StatCard icon={<Activity size={16} />} label="Sessions" value={k?.total_sessions ?? 0} iconColor="#0D9488" />
-          <StatCard icon={<MessageSquare size={16} />} label="Analyses" value={k?.total_analyses ?? 0} iconColor="#7C3AED" />
-          <StatCard icon={<Target size={16} />} label="Avg Score" value={k?.average_score ?? "—"} iconColor="#16A34A" />
-          <StatCard icon={<Flame size={16} />} label="Active (7d)" value={k?.active_users_7d ?? 0} iconColor="#D97706" />
-          <StatCard icon={<Zap size={16} />} label="Questions" value={k?.active_questions ?? 0} iconColor="#DB2777" />
+          <StatCard icon={<Users size={16} />} label="O'quvchilar" value={k?.total_users ?? 0} iconColor="#2563EB" />
+          <StatCard icon={<Activity size={16} />} label="Mashg'ulotlar" value={k?.total_sessions ?? 0} iconColor="#0D9488" />
+          <StatCard icon={<MessageSquare size={16} />} label="Tahlillar" value={k?.total_analyses ?? 0} iconColor="#7C3AED" />
+          <StatCard icon={<Target size={16} />} label="O'rtacha ball" value={k?.average_score ?? "—"} iconColor="#16A34A" />
+          <StatCard icon={<Flame size={16} />} label="Faol (7 kun)" value={k?.active_users_7d ?? 0} iconColor="#D97706" />
+          <StatCard icon={<Zap size={16} />} label="Savollar" value={k?.active_questions ?? 0} iconColor="#DB2777" />
         </div>
 
         {/* Sessions per day */}
         <div className="bg-card border border-border rounded-xl p-5 mb-5">
-          <h2 className="text-sm font-bold text-foreground mb-4">Sessions — last 14 days</h2>
+          <h2 className="text-sm font-bold text-foreground mb-4">Mashg'ulotlar — oxirgi 14 kun</h2>
           <ResponsiveContainer width="100%" height={220}>
             <BarChart data={spd} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -847,7 +886,7 @@ function AnalyticsPage() {
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
           {/* Score distribution */}
           <div className="bg-card border border-border rounded-xl p-5">
-            <h2 className="text-sm font-bold text-foreground mb-4">Score Distribution</h2>
+            <h2 className="text-sm font-bold text-foreground mb-4">Ball taqsimoti</h2>
             <ResponsiveContainer width="100%" height={220}>
               <BarChart data={data?.score_distribution ?? []} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
@@ -861,7 +900,7 @@ function AnalyticsPage() {
 
           {/* Part distribution */}
           <div className="bg-card border border-border rounded-xl p-5">
-            <h2 className="text-sm font-bold text-foreground mb-4">Practice by Part</h2>
+            <h2 className="text-sm font-bold text-foreground mb-4">Qismlar bo'yicha mashq</h2>
             <ResponsiveContainer width="100%" height={220}>
               <PieChart>
                 <Pie
@@ -892,6 +931,9 @@ function QuestionsPage() {
   const [editPart, setEditPart] = useState(1);
   const [editQuestionText, setEditQuestionText] = useState("");
   const [filterPart, setFilterPart] = useState<number | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<SpeakingQuestion | null>(null);
+  const [qSearch, setQSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState<"all" | "active" | "inactive">("all");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -943,7 +985,13 @@ function QuestionsPage() {
     2: questions.filter(q => q.part === 2).length,
     3: questions.filter(q => q.part === 3).length,
   };
-  const filtered = filterPart ? questions.filter(q => q.part === filterPart) : questions;
+  const filtered = questions.filter(q => {
+    if (filterPart && q.part !== filterPart) return false;
+    if (qSearch.trim() && !q.question.toLowerCase().includes(qSearch.toLowerCase())) return false;
+    if (statusFilter === "active" && !q.is_active) return false;
+    if (statusFilter === "inactive" && q.is_active) return false;
+    return true;
+  });
 
   const handleUpdate = async () => {
     if (!editing) return;
@@ -979,24 +1027,24 @@ function QuestionsPage() {
       <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">
         <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="text-xl font-bold text-foreground">Speaking Questions</h1>
-            <p className="text-xs text-muted-foreground mt-0.5">{counts.all} total · shown to students in the bot</p>
+            <h1 className="text-xl font-bold text-foreground">Speaking savollari</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{counts.all} jami · botda o'quvchilarga ko'rsatiladi</p>
           </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all"
           >
             <Plus size={16} />
-            Add Question
+            Savol qo'shish
           </button>
         </div>
 
         {showAdd && (
           <div className="bg-card border border-border rounded-xl p-5 mb-6 space-y-4">
-            <h2 className="text-sm font-semibold text-foreground">New Question</h2>
+            <h2 className="text-sm font-semibold text-foreground">Yangi savol</h2>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div>
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Part</label>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Qism</label>
                 <select
                   value={newPart}
                   onChange={(e) => setNewPart(Number(e.target.value))}
@@ -1008,7 +1056,7 @@ function QuestionsPage() {
                 </select>
               </div>
               <div className="sm:col-span-2">
-                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Question</label>
+                <label className="text-xs font-semibold text-muted-foreground mb-1 block">Savol</label>
                 <input
                   type="text"
                   value={newQuestion}
@@ -1019,33 +1067,66 @@ function QuestionsPage() {
             </div>
             <div className="flex items-center gap-2">
               <button onClick={handleAdd} className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold">
-                Save
+                Saqlash
               </button>
               <button onClick={() => setShowAdd(false)} className="px-4 py-2 bg-muted hover:bg-muted/70 text-muted-foreground rounded-lg text-sm font-semibold">
-                Cancel
+                Bekor qilish
               </button>
             </div>
           </div>
         )}
 
-        {/* Part filter tabs */}
-        <div className="flex items-center gap-2 mb-4">
-          {[
-            { id: null as number | null, label: `All (${counts.all})` },
-            { id: 1, label: `Part 1 (${counts[1]})` },
-            { id: 2, label: `Part 2 (${counts[2]})` },
-            { id: 3, label: `Part 3 (${counts[3]})` },
-          ].map(t => (
-            <button
-              key={String(t.id)}
-              onClick={() => setFilterPart(t.id)}
-              className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
-                filterPart === t.id ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              {t.label}
-            </button>
-          ))}
+        {/* Filters */}
+        <div className="flex flex-wrap items-center justify-between gap-2 mb-4">
+          <div className="flex flex-wrap items-center gap-2">
+            {/* Part filter tabs */}
+            {[
+              { id: null as number | null, label: `Hammasi (${counts.all})` },
+              { id: 1, label: `Part 1 (${counts[1]})` },
+              { id: 2, label: `Part 2 (${counts[2]})` },
+              { id: 3, label: `Part 3 (${counts[3]})` },
+            ].map(t => (
+              <button
+                key={String(t.id)}
+                onClick={() => setFilterPart(t.id)}
+                className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                  filterPart === t.id ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {t.label}
+              </button>
+            ))}
+
+            {/* Status filter */}
+            <div className="flex items-center gap-1 pl-1 ml-1 border-l border-border">
+              {[
+                { id: "all" as const, label: "Hammasi" },
+                { id: "active" as const, label: "Faol" },
+                { id: "inactive" as const, label: "Nofaol" },
+              ].map(s => (
+                <button
+                  key={s.id}
+                  onClick={() => setStatusFilter(s.id)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-all ${
+                    statusFilter === s.id ? "bg-blue-600 text-white" : "bg-muted text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Search */}
+          <div className="relative">
+            <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              value={qSearch}
+              onChange={e => setQSearch(e.target.value)}
+              placeholder="Savollarni qidirish..."
+              className="pl-9 pr-4 py-2 text-sm bg-card border border-border rounded-lg focus:outline-none focus:ring-2 text-foreground placeholder:text-muted-foreground w-56"
+            />
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-xl overflow-hidden">
@@ -1053,14 +1134,14 @@ function QuestionsPage() {
             <table className="w-full">
               <thead>
                 <tr className="border-b border-border bg-muted/20">
-                  {["Part", "Question", "Active", ""].map(h => (
+                  {["Qism", "Savol", "Faol", ""].map(h => (
                     <th key={h} className="text-left px-4 py-2.5 text-[10px] font-bold text-muted-foreground uppercase tracking-widest first:pl-5">{h}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {filtered.length === 0 && (
-                  <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-muted-foreground">No questions. Add one above.</td></tr>
+                  <tr><td colSpan={4} className="px-5 py-10 text-center text-sm text-muted-foreground">Savollar yo'q. Yuqoridan qo'shing.</td></tr>
                 )}
                 {filtered.map(question => {
                   const isEditing = editing?.id === question.id;
@@ -1094,25 +1175,25 @@ function QuestionsPage() {
                       <td className="px-4 py-3.5">
                         <button
                           onClick={() => handleToggleActive(question)}
-                          title="Toggle visibility in bot"
+                          title="Botda ko'rinishini o'zgartirish"
                           className={`text-xs font-semibold px-2 py-1 rounded transition-colors ${question.is_active ? 'bg-green-100 text-green-700 hover:bg-green-200' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'}`}
                         >
-                          {question.is_active ? 'Active' : 'Inactive'}
+                          {question.is_active ? 'Faol' : 'Nofaol'}
                         </button>
                       </td>
                       <td className="px-4 py-3.5">
                         {isEditing ? (
                           <div className="flex items-center gap-2">
-                            <button onClick={handleUpdate} className="text-xs text-green-600 font-semibold hover:underline">Save</button>
-                            <button onClick={() => setEditing(null)} className="text-xs text-gray-600 font-semibold hover:underline">Cancel</button>
+                            <button onClick={handleUpdate} className="text-xs text-green-600 font-semibold hover:underline">Saqlash</button>
+                            <button onClick={() => setEditing(null)} className="text-xs text-gray-600 font-semibold hover:underline">Bekor qilish</button>
                           </div>
                         ) : (
                           <div className="flex items-center gap-2">
                             <button onClick={() => startEdit(question)} className="text-xs text-blue-600 font-semibold hover:underline flex items-center gap-1">
-                              <Edit size={12} /> Edit
+                              <Edit size={12} /> Tahrirlash
                             </button>
-                            <button onClick={() => handleDelete(question.id)} className="text-xs text-red-600 font-semibold hover:underline flex items-center gap-1">
-                              <Trash2 size={12} /> Delete
+                            <button onClick={() => setDeleteTarget(question)} className="text-xs text-red-600 font-semibold hover:underline flex items-center gap-1">
+                              <Trash2 size={12} /> O'chirish
                             </button>
                           </div>
                         )}
@@ -1124,6 +1205,14 @@ function QuestionsPage() {
             </table>
           </div>
         </div>
+
+        <ConfirmDialog
+          open={!!deleteTarget}
+          title="Savolni o'chirish"
+          message="Bu savol butunlay o'chiriladi. Davom etasizmi?"
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={async () => { if (deleteTarget) { await handleDelete(deleteTarget.id); setDeleteTarget(null); } }}
+        />
       </div>
     </div>
   );
