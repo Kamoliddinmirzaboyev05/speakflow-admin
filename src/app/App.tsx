@@ -59,6 +59,78 @@ interface SpeakingQuestion {
   is_active: boolean;
 }
 
+// ── Skeleton loaders ──────────────────────────────────────────────────────────
+function Skeleton({ className = "" }: { className?: string }) {
+  return <div className={`animate-pulse rounded-md bg-muted ${className}`} />;
+}
+
+/** Page heading placeholder + optional action button placeholder. */
+function PageHeaderSkeleton({ action = false }: { action?: boolean }) {
+  return (
+    <div className="flex items-center justify-between mb-7">
+      <div className="space-y-2">
+        <Skeleton className="h-6 w-40" />
+        <Skeleton className="h-3 w-24" />
+      </div>
+      {action && <Skeleton className="h-9 w-36 rounded-lg" />}
+    </div>
+  );
+}
+
+function StatCardsSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4 mb-7">
+      {Array.from({ length: count }).map((_, i) => (
+        <div key={i} className="bg-card border border-border rounded-xl p-5 flex flex-col gap-3">
+          <Skeleton className="h-9 w-9 rounded-lg" />
+          <div className="space-y-2">
+            <Skeleton className="h-6 w-12" />
+            <Skeleton className="h-3 w-16" />
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function TableSkeleton({ rows = 6, cols = 4 }: { rows?: number; cols?: number }) {
+  return (
+    <div className="bg-card border border-border rounded-xl overflow-hidden">
+      <div className="px-5 py-3.5 border-b border-border">
+        <Skeleton className="h-4 w-28" />
+      </div>
+      <div className="divide-y divide-border">
+        {Array.from({ length: rows }).map((_, r) => (
+          <div key={r} className="flex items-center gap-4 px-5 py-3.5">
+            <Skeleton className="h-8 w-8 rounded-full shrink-0" />
+            {Array.from({ length: cols }).map((_, c) => (
+              <Skeleton key={c} className={`h-3.5 ${c === 0 ? "w-40" : "w-16"}`} />
+            ))}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+function ChartCardSkeleton({ className = "" }: { className?: string }) {
+  return (
+    <div className={`bg-card border border-border rounded-xl p-5 ${className}`}>
+      <Skeleton className="h-4 w-40 mb-4" />
+      <Skeleton className="h-[200px] w-full rounded-lg" />
+    </div>
+  );
+}
+
+/** Centered wrapper matching each page's content padding. */
+function PageSkeletonShell({ children }: { children: React.ReactNode }) {
+  return (
+    <div className="flex-1 overflow-auto">
+      <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">{children}</div>
+    </div>
+  );
+}
+
 // ── Shared helpers ────────────────────────────────────────────────────────────
 function scoreColor(score: number | null | undefined): string {
   if (score == null) return "#94A3B8";
@@ -276,7 +348,13 @@ function StudentsPage({ onSelect }: { onSelect: (s: TelegramUser) => void }) {
   );
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+    return (
+      <PageSkeletonShell>
+        <PageHeaderSkeleton />
+        <StatCardsSkeleton count={4} />
+        <TableSkeleton rows={6} cols={5} />
+      </PageSkeletonShell>
+    );
   }
 
   return (
@@ -437,7 +515,19 @@ function StudentDetailPage({ student, onBack }: { student: TelegramUser; onBack:
         </div>
 
         {loading ? (
-          <p className="text-sm text-muted-foreground py-10 text-center">Loading student data…</p>
+          <>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-5">
+              {Array.from({ length: 4 }).map((_, i) => (
+                <div key={i} className="bg-card border border-border rounded-xl p-4 flex flex-col gap-3">
+                  <Skeleton className="h-7 w-7 rounded-lg" />
+                  <Skeleton className="h-5 w-10" />
+                  <Skeleton className="h-3 w-14" />
+                </div>
+              ))}
+            </div>
+            <ChartCardSkeleton className="mb-5" />
+            <TableSkeleton rows={4} cols={3} />
+          </>
         ) : error ? (
           <p className="text-sm text-red-500 py-10 text-center">Failed to load student data.</p>
         ) : (
@@ -631,7 +721,12 @@ function FeedbackReviewPage() {
   );
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+    return (
+      <PageSkeletonShell>
+        <PageHeaderSkeleton />
+        <TableSkeleton rows={7} cols={4} />
+      </PageSkeletonShell>
+    );
   }
 
   return (
@@ -702,7 +797,17 @@ function AnalyticsPage() {
   }, []);
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+    return (
+      <PageSkeletonShell>
+        <Skeleton className="h-6 w-40 mb-6" />
+        <StatCardsSkeleton count={6} />
+        <ChartCardSkeleton className="mb-5" />
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+          <ChartCardSkeleton />
+          <ChartCardSkeleton />
+        </div>
+      </PageSkeletonShell>
+    );
   }
 
   const k = data?.kpis;
@@ -858,14 +963,25 @@ function QuestionsPage() {
   };
 
   if (loading) {
-    return <div className="flex-1 flex items-center justify-center"><p className="text-muted-foreground">Loading...</p></div>;
+    return (
+      <PageSkeletonShell>
+        <PageHeaderSkeleton action />
+        <div className="flex items-center gap-2 mb-4">
+          {Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-7 w-20 rounded-lg" />)}
+        </div>
+        <TableSkeleton rows={6} cols={3} />
+      </PageSkeletonShell>
+    );
   }
 
   return (
     <div className="flex-1 overflow-auto">
       <div className="px-8 py-7 max-w-[1040px] w-full mx-auto">
         <div className="flex items-center justify-between mb-6">
-          <h1 className="text-xl font-bold text-foreground">Speaking Questions</h1>
+          <div>
+            <h1 className="text-xl font-bold text-foreground">Speaking Questions</h1>
+            <p className="text-xs text-muted-foreground mt-0.5">{counts.all} total · shown to students in the bot</p>
+          </div>
           <button
             onClick={() => setShowAdd(!showAdd)}
             className="flex items-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg text-sm font-semibold transition-all"
